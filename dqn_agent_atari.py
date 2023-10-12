@@ -98,9 +98,10 @@ class AtariDQNAgent(DQNBaseAgent):
 		# 5. update behavior net
 
 		with torch.no_grad():
+			q_max : torch.Tensor = self.behavior_net(next_state)
+			q_max = torch.argmax(q_max, dim=1).reshape(self.batch_size,1)
 			q_next = self.target_net(next_state)
-			q_next : torch.Tensor = torch.max(q_next, dim = 1)[0]
-			q_next = q_next.reshape(self.batch_size, 1)
+			q_next : torch.Tensor = q_next.gather(1,q_max)
 		
 			# if episode terminates at next_state, then q_target = reward
 			q_target = self.gamma * q_next * yet + reward
