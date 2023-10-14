@@ -7,7 +7,7 @@ from collections import deque
 from torch.utils.tensorboard import SummaryWriter
 from replay_buffer.replay_buffer import ReplayMemory
 from abc import ABC, abstractmethod
-
+import random
 
 class DQNBaseAgent(ABC):
 	def __init__(self, config):
@@ -102,6 +102,8 @@ class DQNBaseAgent(ABC):
 		all_rewards = []
 		for i in range(self.eval_episode):
 			observation, info = self.test_env.reset()
+			# observation, info = self.test_env.reset(seed=0)
+			# random.seed(0)
 			total_reward = 0
 			while True:
 				self.test_env.render()

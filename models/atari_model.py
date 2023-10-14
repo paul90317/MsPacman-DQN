@@ -13,10 +13,18 @@ class AtariNetDQN(nn.Module):
                                         nn.Conv2d(64, 64, kernel_size=3, stride=1),
                                         nn.ReLU(True)
                                         )
-        self.classifier = nn.Sequential(nn.Linear(7*7*64, 512),
-                                        nn.ReLU(True),
-                                        nn.Linear(512, num_classes)
-                                        )
+        # Dueling DQN architecture
+        self.value_stream = nn.Sequential(
+            nn.Linear(7*7*64, 512),
+            nn.ReLU(True),
+            nn.Linear(512, 1)
+        )
+
+        self.advantage_stream = nn.Sequential(
+            nn.Linear(7*7*64, 512),
+            nn.ReLU(True),
+            nn.Linear(512, num_classes)
+        )
 
         if init_weights:
             self._initialize_weights()
@@ -25,8 +33,15 @@ class AtariNetDQN(nn.Module):
         x = x.float() / 255.
         x = self.cnn(x)
         x = torch.flatten(x, start_dim=1)
-        x = self.classifier(x)
-        return x
+        
+        # Compute value and advantage
+        value = self.value_stream(x)
+        advantage = self.advantage_stream(x)
+
+        # Combine value and advantage to get Q-values
+        q_values = value + (advantage - advantage.mean(dim=1, keepdim=True))
+
+        return q_values
 
     def _initialize_weights(self):
         for m in self.modules():
